@@ -3,7 +3,7 @@ package com.ibatis.sqlmap.engine.cache.memcached;
 import java.security.MessageDigest;
 
 /**
- * MD5���ܳ��÷���
+ * MD5
  * @author <a href="mailto:zhanghz@staff.chinabyte.com">�ź���</a>
  * 
  * @version 1.0

@@ -5,13 +5,14 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import com.ibatis.common.logging.Log;
+import com.ibatis.common.logging.LogFactory;
 
 import com.danga.MemCached.MemCachedClient;
 import com.danga.MemCached.SockIOPool;
 
 /**
- * Memcached缓存
+ * Memcached manager
  * 
  * @author <a href="mailto:fmlou@163.com">HongzeZhang</a>
  * 
@@ -21,7 +22,7 @@ import com.danga.MemCached.SockIOPool;
  */
 public class MemcachedManager {
 
-	private static Logger logger = Logger.getLogger(MemcachedManager.class);
+	private static Log logger = LogFactory.getLog(MemcachedManager.class);
 
 	private static String memcachedDomain = "IBATIS_CACHED"; // memcached 域名
 
@@ -44,7 +45,7 @@ public class MemcachedManager {
 		if (mcc != null)
 			return;
 
-		logger.info("Initializing ibatis memcached start.");
+		logger.debug("Initializing ibatis memcached start.");
 		if (pool == null) {
 			try {
 				pool = SockIOPool.getInstance(memcachedDomain);
@@ -69,7 +70,7 @@ public class MemcachedManager {
 			mcc.setCompressEnable(false);
 			mcc.setCompressThreshold(0);
 		}
-		logger.info("Initializing youxigu Memcached ok!");
+		logger.debug("Initializing youxigu Memcached ok!");
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class MemcachedManager {
 		pool.shutDown();
 		mcc = null;
 		pool = null;
-		logger.info("Ibatis memcached pool closed");
+		logger.debug("Ibatis memcached pool closed");
 	}
 
 	/**
