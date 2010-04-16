@@ -45,7 +45,7 @@ public class MemcachedManager {
 		if (mcc != null)
 			return;
 
-		logger.debug("Initializing ibatis memcached start.");
+		logger.debug("Initializing ibatis memcached manager start.");
 		if (pool == null) {
 			try {
 				pool = SockIOPool.getInstance(memcachedDomain);
@@ -70,7 +70,7 @@ public class MemcachedManager {
 			mcc.setCompressEnable(false);
 			mcc.setCompressThreshold(0);
 		}
-		logger.debug("Initializing youxigu Memcached ok!");
+		logger.debug("Initializing ibatis memcached manager ok!");
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class MemcachedManager {
 		pool.shutDown();
 		mcc = null;
 		pool = null;
-		logger.debug("Ibatis memcached pool closed");
+		logger.debug("Ibatis memcached manager closed");
 	}
 
 	/**
