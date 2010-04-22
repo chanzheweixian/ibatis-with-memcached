@@ -58,6 +58,7 @@ public class MemcachedManager {
 					pool.setNagle(false);
 					pool.setSocketTO(60 * 60);
 					pool.setSocketConnectTO(0);
+					pool.setHashingAlg(SockIOPool.CONSISTENT_HASH);
 					pool.initialize();
 				}
 			} catch (Exception ex) {
