@@ -15,6 +15,12 @@
  */
 package com.ibatis.sqlmap.engine.mapping.statement;
 
+import java.sql.SQLException;
+import java.util.List;
+
+import org.apache.commons.dbcp.BasicDataSource;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
+
 import com.ibatis.sqlmap.client.event.RowHandler;
 import com.ibatis.sqlmap.engine.cache.CacheKey;
 import com.ibatis.sqlmap.engine.cache.CacheModel;
@@ -23,9 +29,6 @@ import com.ibatis.sqlmap.engine.mapping.result.ResultMap;
 import com.ibatis.sqlmap.engine.mapping.sql.Sql;
 import com.ibatis.sqlmap.engine.scope.StatementScope;
 import com.ibatis.sqlmap.engine.transaction.Transaction;
-
-import java.sql.SQLException;
-import java.util.List;
 
 public class CachingStatement extends MappedStatement {
 
@@ -73,6 +76,11 @@ public class CachingStatement extends MappedStatement {
       throws SQLException {
     CacheKey cacheKey = getCacheKey(statementScope, parameterObject);
     cacheKey.update("executeQueryForObject");
+    
+    //set dataSource url 
+    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
+    cacheModel.setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());
+    
     Object object = cacheModel.getObject(cacheKey);
     if (object == CacheModel.NULL_OBJECT){
     	//	This was cached, but null
@@ -90,6 +98,11 @@ public class CachingStatement extends MappedStatement {
     cacheKey.update("executeQueryForList");
     cacheKey.update(skipResults);
     cacheKey.update(maxResults);
+    
+    //set dataSource url 
+    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
+    cacheModel.setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());
+    
     Object listAsObject = cacheModel.getObject(cacheKey);
     List list;
     if(listAsObject == CacheModel.NULL_OBJECT){
