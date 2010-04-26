@@ -24,6 +24,9 @@ import com.ibatis.sqlmap.engine.scope.StatementScope;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.dbcp.BasicDataSource;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
+
 /**
  * Wrapper for Caches.
  */
@@ -59,6 +62,11 @@ public class CacheModel implements ExecuteListener {
   private CacheController controller;
 
   private String resource;
+  
+  
+  //add url
+  private String url;
+  
 
   /**
    * Default constructor
@@ -212,6 +220,10 @@ public class CacheModel implements ExecuteListener {
    * @param statement The statement to execute
    */
   public void onExecuteStatement(MappedStatement statement,CacheKey cacheKey) {
+	 //set dataSource url 
+    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
+    setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());  
+	  
 	removeObject(cacheKey);
     flush(cacheKey);
   }
@@ -384,4 +396,13 @@ public class CacheModel implements ExecuteListener {
   public void setControllerProperties(Properties cacheProps) {
     controller.setProperties(cacheProps);
   }
+
+public String getUrl() {
+	return url;
+}
+
+public void setUrl(String url) {
+	this.url = url;
+}
+  
 }
