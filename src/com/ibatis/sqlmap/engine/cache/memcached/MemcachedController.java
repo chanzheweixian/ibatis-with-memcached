@@ -196,7 +196,7 @@ public class MemcachedController implements CacheController {
 
 		// 获取表的键值
 		pk = (String) props.get("pk");
-		pk = (pk == null) ? "id" : pk;
+//		pk = (pk == null) ? "id" : pk;
 
 		// 缓存分组字段名
 		groupField = (String) props.get("groupField");
@@ -246,6 +246,9 @@ public class MemcachedController implements CacheController {
 
 	// 判断是否根据主键查询
 	public boolean isSqlFromPK(Object sqlKey) {
+		if(pk==null)
+			return false;
+		
 		boolean flag = sqlKey.toString().matches(
 				".*\\s(where|WHERE)(.*|.+?)\\s+" + pk + "\\s*=.*");
 		log.debug("----isSqlFromPK:" + flag);
