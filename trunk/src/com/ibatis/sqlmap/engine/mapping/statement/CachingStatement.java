@@ -24,6 +24,7 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import com.ibatis.sqlmap.client.event.RowHandler;
 import com.ibatis.sqlmap.engine.cache.CacheKey;
 import com.ibatis.sqlmap.engine.cache.CacheModel;
+import com.ibatis.sqlmap.engine.impl.SqlMapClientImpl;
 import com.ibatis.sqlmap.engine.mapping.parameter.ParameterMap;
 import com.ibatis.sqlmap.engine.mapping.result.ResultMap;
 import com.ibatis.sqlmap.engine.mapping.sql.Sql;
@@ -78,8 +79,8 @@ public class CachingStatement extends MappedStatement {
     cacheKey.update("executeQueryForObject");
     
     //set dataSource url 
-    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
-    cacheModel.setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());
+    String dburl=((SqlMapClientImpl)statement.getSqlMapClient()).getDelegate().getDatabaseUrl();
+	cacheModel.setUrl(dburl);
     
     Object object = cacheModel.getObject(cacheKey);
     if (object == CacheModel.NULL_OBJECT){
@@ -89,6 +90,7 @@ public class CachingStatement extends MappedStatement {
        object = statement.executeQueryForObject(statementScope, trans, parameterObject, resultObject);
        cacheModel.putObject(cacheKey, object);
     }
+    
     return object;
   }
 
@@ -100,8 +102,8 @@ public class CachingStatement extends MappedStatement {
     cacheKey.update(maxResults);
     
     //set dataSource url 
-    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
-    cacheModel.setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());
+    String dburl=((SqlMapClientImpl)statement.getSqlMapClient()).getDelegate().getDatabaseUrl();
+	cacheModel.setUrl(dburl);
     
     Object listAsObject = cacheModel.getObject(cacheKey);
     List list;

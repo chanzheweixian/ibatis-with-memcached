@@ -28,9 +28,6 @@ public class MemcachedController implements CacheController {
 
 	private static final Object NULL_VALUE = "SERIALIZABLE_NULL_OBJECT";
 
-	// 数据库地址
-	public String databaseUrl;
-
 	// 缓存域名(带命名空间)
 	public String cacheModelDomain;
 
@@ -50,7 +47,7 @@ public class MemcachedController implements CacheController {
 	@SuppressWarnings("unchecked")
 	public void flush(CacheModel cacheModel) {
 		String groupName = cacheModel.getId();
-		String groupkey = getGroupKey(groupName);
+		String groupkey = getGroupKey(cacheModel, groupName);
 		log.debug("--------------------------------------flush:" + groupkey);
 		HashSet<String> group = (HashSet<String>) MemcachedManager.get(groupkey);
 		if (group != null && !group.isEmpty()) {
@@ -67,10 +64,10 @@ public class MemcachedController implements CacheController {
 		String groupkey = null;
 		String userId = null;
 		if ((userId = this.getGroupIdValue(key)) != null) {
-			groupkey = getUserGroupKey(groupName, userId);
+			groupkey = getUserGroupKey(cacheModel, groupName, userId);
 			deleteGroup(groupkey);
 		}
-		groupkey = getGroupKey(groupName);
+		groupkey = getGroupKey(cacheModel, groupName);
 		deleteGroup(groupkey);
 	}
 
@@ -85,11 +82,11 @@ public class MemcachedController implements CacheController {
 		log.debug("----sqlKey:" + key);
 		Object result = null;
 		String k = null;
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(key)) != null) {
+		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel,key)) != null) {
 			log.debug("----getBean key:" + k);
 			result = MemcachedManager.get(k);
 		} else {
-			k = getCollectionKey(key);
+			k = getCollectionKey(cacheModel,key);
 			log.debug("----getCollection key:" + k);
 			result = MemcachedManager.get(k);
 		}
@@ -114,7 +111,7 @@ public class MemcachedController implements CacheController {
 		String k = null;
 
 		// 检查是否是根据主键查询
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(key)) != null) {
+		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel, key)) != null) {
 			// 获取表名和主键值
 			MemcachedManager.set(k, (Serializable) object, cacheModel.getFlushInterval());
 
@@ -144,11 +141,11 @@ public class MemcachedController implements CacheController {
 			String groupName = cacheModel.getId();
 			String groupkey = null;
 			String userId = null;
-			k = getCollectionKey(key);
+			k = getCollectionKey(cacheModel,key);
 			if ((userId = this.getGroupIdValue(key)) != null) {
-				groupkey = getUserGroupKey(groupName, userId);
+				groupkey = getUserGroupKey(cacheModel,groupName, userId);
 			} else {
-				groupkey = getGroupKey(groupName);
+				groupkey = getGroupKey(cacheModel,groupName);
 			}
 			HashSet<String> group = (HashSet<String>) MemcachedManager
 					.get(groupkey);
@@ -171,7 +168,7 @@ public class MemcachedController implements CacheController {
 	 */
 	public Object removeObject(CacheModel cacheModel, Object key) {
 		String k = null;
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(key)) != null) {
+		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel, key)) != null) {
 			log.debug("----removeObject key:" + k);
 			MemcachedManager.delete(k);
 			return null;
@@ -192,7 +189,6 @@ public class MemcachedController implements CacheController {
 
 		// 获取组名
 		this.cacheModelDomain = (String) props.get("cacheModelDomain");
-		databaseUrl = database == null ? "default_database@" : database + "@";
 
 		// 获取表的键值
 		pk = (String) props.get("pk");
@@ -203,7 +199,8 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取结果集为集合的键值
-	private String getCollectionKey(Object key) {
+	private String getCollectionKey(CacheModel cacheModel, Object key) {
+		log.debug("---database url :"+cacheModel.getDatabaseUrl());
 		String k = key.toString();
 		Pattern p = Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|(.*)");
 		Matcher m = p.matcher(k);
@@ -211,18 +208,19 @@ public class MemcachedController implements CacheController {
 			k = m.group(1);
 		}
 		k = k.replaceFirst("\\|\\d*\\|\\s", "");
-		k = databaseUrl + k;
+		k = cacheModel.getDatabaseUrl() + k;
 		log.debug("----getCollectionKey:" + k);
 		return Md5Util.getMD5Str(k);
 	}
 
 	// 获取结果集为单个对象的键值
-	private String getBeanKey(Object key) {
+	private String getBeanKey(CacheModel cacheModel, Object key) {
+		log.debug("---database url :"+cacheModel.getDatabaseUrl());
 		String table = this.getTableFromSql(key);
 		String pkValue = this.getPkValue(key);
 		if (table == null || pkValue == null)
 			return null;
-		return databaseUrl + "_" + table + "_" + pkValue;
+		return cacheModel.getDatabaseUrl() + "_" + table + "_" + pkValue;
 	}
 
 	// 获取sql中的表名
@@ -236,12 +234,13 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取组键
-	public String getGroupKey(String key) {
+	public String getGroupKey(CacheModel cacheModel, String key) {
+		log.debug("---database url :"+cacheModel.getDatabaseUrl());
 		if (cacheModelDomain != null)
 			key = cacheModelDomain;
 
-		log.debug("----getGroupKey:" + (databaseUrl + key));
-		return databaseUrl + key;
+		log.debug("----getGroupKey:" + (cacheModel.getDatabaseUrl() + key));
+		return cacheModel.getDatabaseUrl() + key;
 	}
 
 	// 判断是否根据主键查询
@@ -351,12 +350,12 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取用户集合组键
-	private String getUserGroupKey(Object key, String userId) {
+	private String getUserGroupKey(CacheModel cacheModel, Object key, String userId) {
 		if (cacheModelDomain != null)
 			key = cacheModelDomain;
 
-		log.debug("----getUserGroupKey:" + (databaseUrl + userId + "@" + key));
-		return databaseUrl + userId + "@" + key;
+		log.debug("----getUserGroupKey:" + (cacheModel.getDatabaseUrl() + userId + "@" + key));
+		return cacheModel.getDatabaseUrl() + userId + "@" + key;
 	}
 
 	// 删除缓存组
@@ -392,7 +391,6 @@ public class MemcachedController implements CacheController {
 		// }
 
 		MemcachedController mc = new MemcachedController();
-		mc.databaseUrl = "jdbc:mysql://172.16.0.13:3306/opt";
 		mc.pk = "accId";
 		mc.groupField = "account_id";
 		String sqlKey = "1331333783|851669673|222222|129349|account.passwd|19568766|   update Account set passwd = ?   where accId=?  ";

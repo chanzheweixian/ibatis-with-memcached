@@ -17,15 +17,17 @@ package com.ibatis.sqlmap.engine.cache;
 
 import com.ibatis.common.logging.Log;
 import com.ibatis.common.logging.LogFactory;
+import com.ibatis.sqlmap.engine.impl.SqlMapClientImpl;
 import com.ibatis.sqlmap.engine.mapping.statement.ExecuteListener;
 import com.ibatis.sqlmap.engine.mapping.statement.MappedStatement;
 import com.ibatis.sqlmap.engine.scope.StatementScope;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
-import org.apache.commons.dbcp.BasicDataSource;
-import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
+import javax.sql.DataSource;
 
 /**
  * Wrapper for Caches.
@@ -221,13 +223,23 @@ public class CacheModel implements ExecuteListener {
    */
   public void onExecuteStatement(MappedStatement statement,CacheKey cacheKey) {
 	 //set dataSource url 
-    TransactionAwareDataSourceProxy dataSource = (TransactionAwareDataSourceProxy)statement.getSqlMapClient().getDataSource();
-    setUrl(((BasicDataSource)dataSource.getTargetDataSource()).getUrl());  
+	String dburl=((SqlMapClientImpl)statement.getSqlMapClient()).getDelegate().getDatabaseUrl();
+	setUrl(dburl);
 	  
 	removeObject(cacheKey);
     flush(cacheKey);
   }
-
+  
+  private Object executeMethod(Object obj, String methodName){
+	  Object o=null;
+	  try {
+		Method m=obj.getClass().getMethod(methodName, null);
+		o=m.invoke(obj, null);
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	  return o;
+  }
 
   /**
    * Returns statistical information about the cache.
@@ -397,7 +409,7 @@ public class CacheModel implements ExecuteListener {
     controller.setProperties(cacheProps);
   }
 
-public String getUrl() {
+public String getDatabaseUrl() {
 	return url;
 }
 
