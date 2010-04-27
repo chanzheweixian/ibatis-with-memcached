@@ -62,6 +62,7 @@ maxSessions CDATA #IMPLIED
 maxTransactions CDATA #IMPLIED
 maxRequests CDATA #IMPLIED
 defaultStatementTimeout CDATA #IMPLIED
+databaseUrl CDATA #IMPLIED
 >
 
 <!--The <transactionManager> element allows you to configure the transaction management services for an

@@ -38,6 +38,12 @@ public class SqlMapConfiguration {
     registerDefaultTypeAliases();
   }
 
+  
+  public void setDatabaseUrl(String databaseUrl) {
+	  client.getDelegate().setDatabaseUrl(databaseUrl);
+  }
+
+
   public TypeHandlerFactory getTypeHandlerFactory() {
     return typeHandlerFactory;
   }

@@ -126,6 +126,9 @@ public class SqlMapConfigParser {
         String useStatementNamespacesAttr = attributes.getProperty("useStatementNamespaces");
         boolean useStatementNamespaces = "true".equals(useStatementNamespacesAttr);
         state.setUseStatementNamespaces(useStatementNamespaces);
+
+        String databaseUrl = attributes.getProperty("databaseUrl");
+        config.setDatabaseUrl(databaseUrl);
       }
     });
   }

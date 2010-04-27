@@ -77,6 +77,8 @@ public class SqlMapExecutorDelegate {
   private ResultObjectFactory resultObjectFactory;
   private boolean statementCacheEnabled;
 
+  private String databseUrl;
+
   /**
    * Default constructor
    */
@@ -909,5 +911,13 @@ public class SqlMapExecutorDelegate {
   public void setForceMultipleResultSetSupport(boolean forceMultipleResultSetSupport) {
     this.forceMultipleResultSetSupport = forceMultipleResultSetSupport;
   }
+
+public void setDatabaseUrl(String databaseUrl) {
+	this.databseUrl=databaseUrl;
+}
+
+public String getDatabaseUrl() {
+	return this.databseUrl;
+}
 }
 
