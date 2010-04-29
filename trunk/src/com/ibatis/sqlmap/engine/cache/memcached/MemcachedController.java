@@ -29,7 +29,7 @@ public class MemcachedController implements CacheController {
 	private static final Object NULL_VALUE = "SERIALIZABLE_NULL_OBJECT";
 
 	// 缓存域名(带命名空间)
-	public String cacheModelDomain;
+//	public String cacheModelDomain;
 
 	// 主键
 	public String pk;
@@ -188,7 +188,7 @@ public class MemcachedController implements CacheController {
 		String database = (String) props.get("database");
 
 		// 获取组名
-		this.cacheModelDomain = (String) props.get("cacheModelDomain");
+//		this.cacheModelDomain = (String) props.get("cacheModelDomain");
 
 		// 获取表的键值
 		pk = (String) props.get("pk");
@@ -220,7 +220,7 @@ public class MemcachedController implements CacheController {
 		String pkValue = this.getPkValue(key);
 		if (table == null || pkValue == null)
 			return null;
-		return cacheModel.getDatabaseUrl() + "_" + table + "_" + pkValue;
+		return cacheModel.getDatabaseUrl() + "@" + table + "_" + pkValue;
 	}
 
 	// 获取sql中的表名
@@ -236,16 +236,17 @@ public class MemcachedController implements CacheController {
 	// 获取组键
 	public String getGroupKey(CacheModel cacheModel, String key) {
 		log.debug("---database url :"+cacheModel.getDatabaseUrl());
-		if (cacheModelDomain != null)
-			key = cacheModelDomain;
-
+//		if (cacheModelDomain != null)
+//			key = cacheModelDomain;
+		if(this.groupField!=null)
+			key=cacheModel.getId();
 		log.debug("----getGroupKey:" + (cacheModel.getDatabaseUrl() + key));
 		return cacheModel.getDatabaseUrl() + key;
 	}
 
 	// 判断是否根据主键查询
 	public boolean isSqlFromPK(Object sqlKey) {
-		if(pk==null)
+		if(pk==null || sqlKey.toString().contains(" count(") || sqlKey.toString().contains(" COUNT("))
 			return false;
 		
 		boolean flag = sqlKey.toString().matches(
@@ -350,12 +351,15 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取用户集合组键
-	private String getUserGroupKey(CacheModel cacheModel, Object key, String userId) {
-		if (cacheModelDomain != null)
-			key = cacheModelDomain;
+	private String getUserGroupKey(CacheModel cacheModel, Object key, String groupId) {
+//		if (cacheModelDomain != null)
+//			key = cacheModelDomain;
 
-		log.debug("----getUserGroupKey:" + (cacheModel.getDatabaseUrl() + userId + "@" + key));
-		return cacheModel.getDatabaseUrl() + userId + "@" + key;
+		if(this.groupField!=null)
+			key=cacheModel.getId();
+		
+		log.debug("----getUserGroupKey:" + (cacheModel.getDatabaseUrl() + groupId + "@" + key));
+		return cacheModel.getDatabaseUrl() + groupId + "@" + key;
 	}
 
 	// 删除缓存组
@@ -393,11 +397,11 @@ public class MemcachedController implements CacheController {
 		MemcachedController mc = new MemcachedController();
 		mc.pk = "accId";
 		mc.groupField = "account_id";
-		String sqlKey = "1331333783|851669673|222222|129349|account.passwd|19568766|   update Account set passwd = ?   where accId=?  ";
+		String sqlKey = "1331333783|851669673|129349|account.passwd|19568766|   select count(*) from Account  where accId=?  ";
 		// System.out.println(mc.getBeanKey(sqlKey));
 //		System.out.println(mc.getGroupIdValue(sqlKey));
-		mc.isSqlFromPK(sqlKey);
-		System.out.println(mc.getPkValue(sqlKey));
+		System.out.println(mc.isSqlFromPK(sqlKey));
+//		System.out.println(mc.getPkValue(sqlKey));
 		// Pattern p =
 		// Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|.+?\\|(.+?)\\|.*");
 		// Matcher m = p.matcher(sqlKey);
