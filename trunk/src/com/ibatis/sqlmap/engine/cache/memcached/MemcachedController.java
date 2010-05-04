@@ -28,9 +28,6 @@ public class MemcachedController implements CacheController {
 
 	private static final Object NULL_VALUE = "SERIALIZABLE_NULL_OBJECT";
 
-	// 缓存域名(带命名空间)
-//	public String cacheModelDomain;
-
 	// 主键
 	public String pk;
 
@@ -117,27 +114,6 @@ public class MemcachedController implements CacheController {
 
 			log.debug("----putObject key:" + k + ",value:" + object);
 		} else {
-			// String groupName = cacheModel.getId();
-			// String groupkey = getGroupKey(groupName);
-			// String userId = null;
-			// k = getCollectionKey(key);
-			// HashSet<String> group = (HashSet<String>) MemcachedUtil
-			// .get(groupkey);
-			// if (group == null)
-			// group = new HashSet<String>();
-			// group.add(k);
-			// MemcachedUtil.set(groupkey, group);
-			// MemcachedUtil.set(k, (Serializable) object);
-			//
-			// if (this.isSqlFromUserId(key)
-			// && (userId = this.getUserIdValue(key)) != null) {
-			// groupkey = getUserGroupKey(groupName, userId);
-			// group = (HashSet<String>) MemcachedUtil.get(groupkey);
-			// if (group == null)
-			// group = new HashSet<String>();
-			// group.add(k);
-			// MemcachedUtil.set(groupkey, group);
-			// }
 			String groupName = cacheModel.getId();
 			String groupkey = null;
 			String userId = null;
@@ -184,15 +160,8 @@ public class MemcachedController implements CacheController {
 	 * .Properties)
 	 */
 	public void setProperties(Properties props) {
-		// 获取数据库
-		String database = (String) props.get("database");
-
-		// 获取组名
-//		this.cacheModelDomain = (String) props.get("cacheModelDomain");
-
 		// 获取表的键值
 		pk = (String) props.get("pk");
-//		pk = (pk == null) ? "id" : pk;
 
 		// 缓存分组字段名
 		groupField = (String) props.get("groupField");
@@ -236,8 +205,6 @@ public class MemcachedController implements CacheController {
 	// 获取组键
 	public String getGroupKey(CacheModel cacheModel, String key) {
 		log.debug("---database url :"+cacheModel.getDatabaseUrl());
-//		if (cacheModelDomain != null)
-//			key = cacheModelDomain;
 		if(this.groupField!=null)
 			key=cacheModel.getId();
 		log.debug("----getGroupKey:" + (cacheModel.getDatabaseUrl() + key));
@@ -246,7 +213,7 @@ public class MemcachedController implements CacheController {
 
 	// 判断是否根据主键查询
 	public boolean isSqlFromPK(Object sqlKey) {
-		if(pk==null || sqlKey.toString().contains(" count(") || sqlKey.toString().contains(" COUNT("))
+		if(pk==null || pk.trim().equals("") || sqlKey.toString().contains(" count(") || sqlKey.toString().contains(" COUNT("))
 			return false;
 		
 		boolean flag = sqlKey.toString().matches(
@@ -352,9 +319,6 @@ public class MemcachedController implements CacheController {
 
 	// 获取用户集合组键
 	private String getUserGroupKey(CacheModel cacheModel, Object key, String groupId) {
-//		if (cacheModelDomain != null)
-//			key = cacheModelDomain;
-
 		if(this.groupField!=null)
 			key=cacheModel.getId();
 		
@@ -374,46 +338,5 @@ public class MemcachedController implements CacheController {
 				MemcachedManager.delete(k);
 			}
 		}
-	}
-
-	public static void main(String[] args) {
-		// String sqlKey =
-		// "-1507791857|-1467294710|a|2|129349|albums.findallCount|22908906|         select count(*) from albums         where id=? and id=? and accId = ?      |executeQueryForObject";
-		//
-		// int n = StringUtils.countMatches(sqlKey.substring(0, sqlKey
-		// .indexOf("accId = ?")), "?");
-		// StringBuilder sb = new StringBuilder("\\-?\\d*\\|\\-?\\d*\\|");
-		// for (int i = 0; i < n; i++) {
-		// sb.append("\\-?\\w*\\|");
-		// }
-		// sb.append("(.+?)\\|.*");
-		// System.out.println(sb.toString());
-		// Pattern p = Pattern.compile(sb.toString());
-		// Matcher m = p.matcher(sqlKey);
-		// if (m.find(1)) {
-		// System.out.println(m.group(1));
-		// }
-
-		MemcachedController mc = new MemcachedController();
-		mc.pk = "accId";
-		mc.groupField = "account_id";
-		String sqlKey = "1331333783|851669673|129349|account.passwd|19568766|   select count(*) from Account  where accId=?  ";
-		// System.out.println(mc.getBeanKey(sqlKey));
-//		System.out.println(mc.getGroupIdValue(sqlKey));
-		System.out.println(mc.isSqlFromPK(sqlKey));
-//		System.out.println(mc.getPkValue(sqlKey));
-		// Pattern p =
-		// Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|.+?\\|(.+?)\\|.*");
-		// Matcher m = p.matcher(sqlKey);
-		// if (m.find(1)) {r
-		// System.out.println(m.group(1));
-		// }
-
-		// String
-		// k="1168072958|3533071495|4027|129349|90|albums.decreasesize|17667014|   update albums set leaf = leaf - 1 ,size = size - ?   where accId = ? and id=?   |update";
-		// System.out.println(k.length());
-		// k=k.replaceFirst("\\|\\d*\\|\\s", "");
-		// System.out.println(k);
-		// System.out.println(k.length());
 	}
 }
