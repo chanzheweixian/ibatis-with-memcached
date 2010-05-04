@@ -78,6 +78,9 @@ public class MemcachedManager {
 	 * 关闭连接池
 	 */
 	public void closePool() {
+		if(pool==null)
+			return;
+		
 		pool.shutDown();
 		mcc = null;
 		pool = null;
