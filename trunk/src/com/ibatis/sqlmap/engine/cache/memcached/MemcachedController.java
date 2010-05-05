@@ -26,8 +26,6 @@ public class MemcachedController implements CacheController {
 
 	private static final Log log = LogFactory.getLog(MemcachedController.class);
 
-	private static final Object NULL_VALUE = "SERIALIZABLE_NULL_OBJECT";
-
 	// 主键
 	public String pk;
 
@@ -88,7 +86,7 @@ public class MemcachedController implements CacheController {
 			result = MemcachedManager.get(k);
 		}
 
-		if (result != null && result.equals(NULL_VALUE)) {
+		if (result != null && result.equals(CacheModel.NULL_OBJECT)) {
 			log.debug("----CacheObject null!");
 			return null;
 		}
@@ -160,11 +158,14 @@ public class MemcachedController implements CacheController {
 	 * .Properties)
 	 */
 	public void setProperties(Properties props) {
+		log.debug("Set properties.");
 		// 获取表的键值
 		pk = (String) props.get("pk");
+		log.debug("pk="+pk);
 
 		// 缓存分组字段名
 		groupField = (String) props.get("groupField");
+		log.debug("groupField="+groupField);
 	}
 
 	// 获取结果集为集合的键值
@@ -213,6 +214,7 @@ public class MemcachedController implements CacheController {
 
 	// 判断是否根据主键查询
 	public boolean isSqlFromPK(Object sqlKey) {
+		log.debug("----PK:" + pk+".");
 		if(pk==null || pk.trim().equals("") || sqlKey.toString().contains(" count(") || sqlKey.toString().contains(" COUNT("))
 			return false;
 		
@@ -338,5 +340,46 @@ public class MemcachedController implements CacheController {
 				MemcachedManager.delete(k);
 			}
 		}
+	}
+
+	public static void main(String[] args) {
+		// String sqlKey =
+		// "-1507791857|-1467294710|a|2|129349|albums.findallCount|22908906|         select count(*) from albums         where id=? and id=? and accId = ?      |executeQueryForObject";
+		//
+		// int n = StringUtils.countMatches(sqlKey.substring(0, sqlKey
+		// .indexOf("accId = ?")), "?");
+		// StringBuilder sb = new StringBuilder("\\-?\\d*\\|\\-?\\d*\\|");
+		// for (int i = 0; i < n; i++) {
+		// sb.append("\\-?\\w*\\|");
+		// }
+		// sb.append("(.+?)\\|.*");
+		// System.out.println(sb.toString());
+		// Pattern p = Pattern.compile(sb.toString());
+		// Matcher m = p.matcher(sqlKey);
+		// if (m.find(1)) {
+		// System.out.println(m.group(1));
+		// }
+
+		MemcachedController mc = new MemcachedController();
+		mc.pk = "accId";
+		mc.groupField = "account_id";
+		String sqlKey = "1331333783|851669673|129349|account.passwd|19568766|   select count(*) from Account  where accId=?  ";
+		// System.out.println(mc.getBeanKey(sqlKey));
+//		System.out.println(mc.getGroupIdValue(sqlKey));
+		System.out.println(mc.isSqlFromPK(sqlKey));
+//		System.out.println(mc.getPkValue(sqlKey));
+		// Pattern p =
+		// Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|.+?\\|(.+?)\\|.*");
+		// Matcher m = p.matcher(sqlKey);
+		// if (m.find(1)) {r
+		// System.out.println(m.group(1));
+		// }
+
+		// String
+		// k="1168072958|3533071495|4027|129349|90|albums.decreasesize|17667014|   update albums set leaf = leaf - 1 ,size = size - ?   where accId = ? and id=?   |update";
+		// System.out.println(k.length());
+		// k=k.replaceFirst("\\|\\d*\\|\\s", "");
+		// System.out.println(k);
+		// System.out.println(k.length());
 	}
 }
