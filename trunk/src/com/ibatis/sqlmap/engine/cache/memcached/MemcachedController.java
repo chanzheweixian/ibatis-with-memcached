@@ -44,7 +44,8 @@ public class MemcachedController implements CacheController {
 		String groupName = cacheModel.getId();
 		String groupkey = getGroupKey(cacheModel, groupName);
 		log.debug("--------------------------------------flush:" + groupkey);
-		HashSet<String> group = (HashSet<String>) MemcachedManager.get(groupkey);
+		HashSet<String> group = (HashSet<String>) MemcachedManager
+				.get(groupkey);
 		if (group != null && !group.isEmpty()) {
 			MemcachedManager.set(groupkey, new HashSet<String>());
 			for (String k : group) {
@@ -55,14 +56,13 @@ public class MemcachedController implements CacheController {
 
 	public void flush(CacheModel cacheModel, Object key) {
 		log.debug("----flush key:" + key);
-		String groupName = cacheModel.getId();
 		String groupkey = null;
 		String userId = null;
 		if ((userId = this.getGroupIdValue(key)) != null) {
-			groupkey = getUserGroupKey(cacheModel, groupName, userId);
+			groupkey = getUserGroupKey(cacheModel, key, userId);
 			deleteGroup(groupkey);
 		}
-		groupkey = getGroupKey(cacheModel, groupName);
+		groupkey = getGroupKey(cacheModel, key);
 		deleteGroup(groupkey);
 	}
 
@@ -77,11 +77,12 @@ public class MemcachedController implements CacheController {
 		log.debug("----sqlKey:" + key);
 		Object result = null;
 		String k = null;
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel,key)) != null) {
+		if (this.isSqlFromPK(key)
+				&& (k = this.getBeanKey(cacheModel, key)) != null) {
 			log.debug("----getBean key:" + k);
 			result = MemcachedManager.get(k);
 		} else {
-			k = getCollectionKey(cacheModel,key);
+			k = getCollectionKey(cacheModel, key);
 			log.debug("----getCollection key:" + k);
 			result = MemcachedManager.get(k);
 		}
@@ -106,28 +107,32 @@ public class MemcachedController implements CacheController {
 		String k = null;
 
 		// 检查是否是根据主键查询
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel, key)) != null) {
+		if (this.isSqlFromPK(key)
+				&& (k = this.getBeanKey(cacheModel, key)) != null) {
 			// 获取表名和主键值
-			MemcachedManager.set(k, (Serializable) object, cacheModel.getFlushInterval());
+			MemcachedManager.set(k, (Serializable) object, cacheModel
+					.getFlushInterval());
 
 			log.debug("----putObject key:" + k + ",value:" + object);
 		} else {
 			String groupName = cacheModel.getId();
 			String groupkey = null;
 			String userId = null;
-			k = getCollectionKey(cacheModel,key);
+			k = getCollectionKey(cacheModel, key);
 			if ((userId = this.getGroupIdValue(key)) != null) {
-				groupkey = getUserGroupKey(cacheModel,groupName, userId);
+				groupkey = getUserGroupKey(cacheModel, groupName, userId);
 			} else {
-				groupkey = getGroupKey(cacheModel,groupName);
+				groupkey = getGroupKey(cacheModel, groupName);
 			}
 			HashSet<String> group = (HashSet<String>) MemcachedManager
 					.get(groupkey);
 			if (group == null)
 				group = new HashSet<String>();
 			group.add(k);
-			MemcachedManager.set(groupkey, group, cacheModel.getFlushInterval());
-			MemcachedManager.set(k, (Serializable) object, cacheModel.getFlushInterval());
+			MemcachedManager
+					.set(groupkey, group, cacheModel.getFlushInterval());
+			MemcachedManager.set(k, (Serializable) object, cacheModel
+					.getFlushInterval());
 			log.debug("----putCollection key:" + k + ",value:" + object
 					+ ",group:" + groupName);
 		}
@@ -142,7 +147,8 @@ public class MemcachedController implements CacheController {
 	 */
 	public Object removeObject(CacheModel cacheModel, Object key) {
 		String k = null;
-		if (this.isSqlFromPK(key) && (k = this.getBeanKey(cacheModel, key)) != null) {
+		if (this.isSqlFromPK(key)
+				&& (k = this.getBeanKey(cacheModel, key)) != null) {
 			log.debug("----removeObject key:" + k);
 			MemcachedManager.delete(k);
 			return null;
@@ -161,16 +167,16 @@ public class MemcachedController implements CacheController {
 		log.debug("Set properties.");
 		// 获取表的键值
 		pk = (String) props.get("pk");
-		log.debug("pk="+pk);
+		log.debug("pk=" + pk);
 
 		// 缓存分组字段名
 		groupField = (String) props.get("groupField");
-		log.debug("groupField="+groupField);
+		log.debug("groupField=" + groupField);
 	}
 
 	// 获取结果集为集合的键值
 	private String getCollectionKey(CacheModel cacheModel, Object key) {
-		log.debug("---database url :"+cacheModel.getDatabaseUrl());
+		log.debug("---database url :" + cacheModel.getDatabaseUrl());
 		String k = key.toString();
 		Pattern p = Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|(.*)");
 		Matcher m = p.matcher(k);
@@ -185,7 +191,7 @@ public class MemcachedController implements CacheController {
 
 	// 获取结果集为单个对象的键值
 	private String getBeanKey(CacheModel cacheModel, Object key) {
-		log.debug("---database url :"+cacheModel.getDatabaseUrl());
+		log.debug("---database url :" + cacheModel.getDatabaseUrl());
 		String table = this.getTableFromSql(key);
 		String pkValue = this.getPkValue(key);
 		if (table == null || pkValue == null)
@@ -204,20 +210,25 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取组键
-	public String getGroupKey(CacheModel cacheModel, String key) {
-		log.debug("---database url :"+cacheModel.getDatabaseUrl());
-		if(this.groupField!=null)
-			key=cacheModel.getId();
-		log.debug("----getGroupKey:" + (cacheModel.getDatabaseUrl() + key));
-		return cacheModel.getDatabaseUrl() + key;
+	public String getGroupKey(CacheModel cacheModel, Object key) {
+		log.debug("---database url :" + cacheModel.getDatabaseUrl());
+		// if(this.groupField!=null)
+		// key=cacheModel.getId();
+		// log.debug("----getGroupKey:" + (cacheModel.getDatabaseUrl() + key));
+		// return cacheModel.getDatabaseUrl() + key;
+		log.debug("----getGroupKey:"
+				+ (cacheModel.getDatabaseUrl() + this.getTableFromSql(key)));
+		return cacheModel.getDatabaseUrl() + "@" + this.getTableFromSql(key);
 	}
 
 	// 判断是否根据主键查询
 	public boolean isSqlFromPK(Object sqlKey) {
-		log.debug("----PK:" + pk+".");
-		if(pk==null || pk.trim().equals("") || sqlKey.toString().contains(" count(") || sqlKey.toString().contains(" COUNT("))
+		log.debug("----PK:" + pk + ".");
+		if (pk == null || pk.trim().equals("")
+				|| sqlKey.toString().contains(" count(")
+				|| sqlKey.toString().contains(" COUNT("))
 			return false;
-		
+
 		boolean flag = sqlKey.toString().matches(
 				".*\\s(where|WHERE)(.*|.+?)\\s+" + pk + "\\s*=.*");
 		log.debug("----isSqlFromPK:" + flag);
@@ -231,11 +242,11 @@ public class MemcachedController implements CacheController {
 		start = (start < 0) ? key.indexOf("UPDATE") : start;
 		start = (start < 0) ? key.indexOf("where") : start;
 		start = (start < 0) ? key.indexOf("WHERE") : start;
-		if(start<0)
+		if (start < 0)
 			return null;
-		
+
 		int end = key.indexOf(" " + pk, start);
-		log.debug("----getPkValue: end:"+end);
+		log.debug("----getPkValue: end:" + end);
 		if (end < 0)
 			return null;
 
@@ -247,22 +258,23 @@ public class MemcachedController implements CacheController {
 		sb.append("((.|\\n|\\r)+?)\\|.*");
 		Pattern p = Pattern.compile(sb.toString());
 		Matcher m = p.matcher(key);
-		if (m.find(n+1)) {
-			log.debug("pk:" + m.group(n+1));
-			return m.group(n+1);
+		if (m.find(n + 1)) {
+			log.debug("pk:" + m.group(n + 1));
+			return m.group(n + 1);
 		}
 		return null;
 	}
 
 	// 获取用户id
 	public String getGroupIdValue(Object sqlKey) {
-		if (groupField == null)
+		if (groupField == null || groupField.trim().equals(""))
 			return null;
 
 		log.debug("sqlKey:" + sqlKey);
 		String key = sqlKey.toString();
 
-		if (key.matches("(.|\\n|\\r)*\\s(where|WHERE).*\\s+" + groupField + "\\s*=.*")) {
+		if (key.matches("(.|\\n|\\r)*\\s(where|WHERE).*\\s+" + groupField
+				+ "\\s*=.*")) {
 
 			int start = key.indexOf("update");
 			start = (start < 0) ? key.indexOf("UPDATE") : start;
@@ -284,17 +296,17 @@ public class MemcachedController implements CacheController {
 			log.debug("p=" + sb.toString());
 			Pattern p = Pattern.compile(sb.toString());
 			Matcher m = p.matcher(key);
-			if (m.find(n+1)) {
-				log.debug("userId:" + m.group(n+1));
-				return m.group(n+1);
+			if (m.find(n + 1)) {
+				log.debug("userId:" + m.group(n + 1));
+				return m.group(n + 1);
 			}
 		} else if (key.matches("(.|\\n|\\r)*(insert|INSERT)\\s+.*\\(.*,?\\s*"
 				+ groupField + "\\s*,?.*\\)\\s*(values|values).*")) {
 			int start = key.indexOf("insert");
 			start = (start == 0) ? key.indexOf("INSERT") : start;
-			log.debug("start="+start);
+			log.debug("start=" + start);
 			int end = key.indexOf(groupField, start);
-			log.debug("end="+end);
+			log.debug("end=" + end);
 			if (end < 0)
 				return null;
 
@@ -310,9 +322,9 @@ public class MemcachedController implements CacheController {
 			log.debug("p=" + sb.toString());
 			Pattern p = Pattern.compile(sb.toString());
 			Matcher m = p.matcher(key);
-			if (m.find(n+1)) {
-				log.debug("userId:" + m.group(n+1));
-				return m.group(n+1);
+			if (m.find(n + 1)) {
+				log.debug("userId:" + m.group(n + 1));
+				return m.group(n + 1);
 			}
 		}
 
@@ -320,19 +332,21 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取用户集合组键
-	private String getUserGroupKey(CacheModel cacheModel, Object key, String groupId) {
-		if(this.groupField!=null)
-			key=cacheModel.getId();
-		
-		log.debug("----getUserGroupKey:" + (cacheModel.getDatabaseUrl() + groupId + "@" + key));
-		return cacheModel.getDatabaseUrl() + groupId + "@" + key;
+	private String getUserGroupKey(CacheModel cacheModel, Object key,
+			String groupId) {
+		log.debug("----getUserGroupKey:"
+				+ (cacheModel.getDatabaseUrl() + "@"
+						+ this.getTableFromSql(key) + "_group:" + groupId));
+		return cacheModel.getDatabaseUrl() + "@" + this.getTableFromSql(key)
+				+ "_group:" + groupId;
 	}
 
 	// 删除缓存组
 	@SuppressWarnings("unchecked")
 	private void deleteGroup(String groupkey) {
 		log.debug("----flush group:" + groupkey);
-		HashSet<String> group = (HashSet<String>) MemcachedManager.get(groupkey);
+		HashSet<String> group = (HashSet<String>) MemcachedManager
+				.get(groupkey);
 		if (group != null && !group.isEmpty()) {
 			MemcachedManager.set(groupkey, new HashSet<String>());
 			for (String k : group) {
@@ -365,9 +379,9 @@ public class MemcachedController implements CacheController {
 		mc.groupField = "account_id";
 		String sqlKey = "1331333783|851669673|129349|account.passwd|19568766|   select count(*) from Account  where accId=?  ";
 		// System.out.println(mc.getBeanKey(sqlKey));
-//		System.out.println(mc.getGroupIdValue(sqlKey));
+		// System.out.println(mc.getGroupIdValue(sqlKey));
 		System.out.println(mc.isSqlFromPK(sqlKey));
-//		System.out.println(mc.getPkValue(sqlKey));
+		// System.out.println(mc.getPkValue(sqlKey));
 		// Pattern p =
 		// Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|.+?\\|(.+?)\\|.*");
 		// Matcher m = p.matcher(sqlKey);
