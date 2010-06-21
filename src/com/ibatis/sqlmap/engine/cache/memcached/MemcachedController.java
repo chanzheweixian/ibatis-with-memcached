@@ -75,14 +75,15 @@ public class MemcachedController implements CacheController {
 	 */
 	public Object getObject(CacheModel cacheModel, Object key) {
 		log.debug("----sqlKey:" + key);
+		String dbUrl=cacheModel.getDatabaseUrl();
 		Object result = null;
 		String k = null;
 		if (this.isSqlFromPK(key)
-				&& (k = this.getBeanKey(cacheModel, key)) != null) {
+				&& (k = this.getBeanKey(dbUrl, key)) != null) {
 			log.debug("----getBean key:" + k);
 			result = MemcachedManager.get(k);
 		} else {
-			k = getCollectionKey(cacheModel, key);
+			k = getCollectionKey(dbUrl, key);
 			log.debug("----getCollection key:" + k);
 			result = MemcachedManager.get(k);
 		}
@@ -104,11 +105,12 @@ public class MemcachedController implements CacheController {
 	@SuppressWarnings("unchecked")
 	public void putObject(CacheModel cacheModel, Object key, Object object) {
 		// System.out.println("key=" + key);
+		String dbUrl=cacheModel.getDatabaseUrl();
 		String k = null;
 
 		// 检查是否是根据主键查询
 		if (this.isSqlFromPK(key)
-				&& (k = this.getBeanKey(cacheModel, key)) != null) {
+				&& (k = this.getBeanKey(dbUrl, key)) != null) {
 			// 获取表名和主键值
 			MemcachedManager.set(k, (Serializable) object, cacheModel
 					.getFlushInterval());
@@ -118,7 +120,7 @@ public class MemcachedController implements CacheController {
 			String groupName = cacheModel.getId();
 			String groupkey = null;
 			String userId = null;
-			k = getCollectionKey(cacheModel, key);
+			k = getCollectionKey(dbUrl, key);
 			if ((userId = this.getGroupIdValue(key)) != null) {
 				groupkey = getUserGroupKey(cacheModel, groupName, userId);
 			} else {
@@ -147,8 +149,9 @@ public class MemcachedController implements CacheController {
 	 */
 	public Object removeObject(CacheModel cacheModel, Object key) {
 		String k = null;
+		String dbUrl=cacheModel.getDatabaseUrl();
 		if (this.isSqlFromPK(key)
-				&& (k = this.getBeanKey(cacheModel, key)) != null) {
+				&& (k = this.getBeanKey(dbUrl, key)) != null) {
 			log.debug("----removeObject key:" + k);
 			MemcachedManager.delete(k);
 			return null;
@@ -175,8 +178,8 @@ public class MemcachedController implements CacheController {
 	}
 
 	// 获取结果集为集合的键值
-	private String getCollectionKey(CacheModel cacheModel, Object key) {
-		log.debug("---database url :" + cacheModel.getDatabaseUrl());
+	private String getCollectionKey(String dbUrl, Object key) {
+		log.debug("---database url :" + dbUrl);
 		String k = key.toString();
 		Pattern p = Pattern.compile("\\-?\\d*\\|\\-?\\d*\\|(.*)");
 		Matcher m = p.matcher(k);
@@ -184,19 +187,19 @@ public class MemcachedController implements CacheController {
 			k = m.group(1);
 		}
 		k = k.replaceFirst("\\|\\d*\\|\\s", "");
-		k = cacheModel.getDatabaseUrl() + k;
+		k = dbUrl + k;
 		log.debug("----getCollectionKey:" + k);
 		return Md5Util.getMD5Str(k);
 	}
 
 	// 获取结果集为单个对象的键值
-	private String getBeanKey(CacheModel cacheModel, Object key) {
-		log.debug("---database url :" + cacheModel.getDatabaseUrl());
+	private String getBeanKey(String dbUrl, Object key) {
+		log.debug("---database url :" + dbUrl);
 		String table = this.getTableFromSql(key);
 		String pkValue = this.getPkValue(key);
 		if (table == null || pkValue == null)
 			return null;
-		return cacheModel.getDatabaseUrl() + "@" + table + "_" + pkValue;
+		return dbUrl + "@" + table + "_" + pkValue;
 	}
 
 	// 获取sql中的表名
