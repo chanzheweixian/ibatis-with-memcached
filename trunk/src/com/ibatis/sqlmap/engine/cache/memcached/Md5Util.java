@@ -4,6 +4,7 @@ import java.security.MessageDigest;
 
 /**
  * MD5
+ * 
  * @author <a href="mailto:zhanghz@staff.chinabyte.com">�ź���</a>
  * 
  * @version 1.0
@@ -53,12 +54,15 @@ public class Md5Util {
 	public static char[] cryptPassword(char pwd[]) throws Exception {
 		if (md == null)
 			md = MessageDigest.getInstance(ALGORITHM);
-		md.reset();
+		char crypt[] = null;
 		byte pwdb[] = new byte[pwd.length];
 		for (int b = 0; b < pwd.length; b++)
 			pwdb[b] = (byte) pwd[b];
 
-		char crypt[] = hexDump(md.digest(pwdb));
+		synchronized (md) {
+			md.reset();
+			crypt = hexDump(md.digest(pwdb));
+		}
 		smudge(pwdb);
 		return crypt;
 	}
